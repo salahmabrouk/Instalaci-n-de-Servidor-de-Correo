@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Servidor de Correo</title>
+    <link rel="stylesheet" href="styleS.css">
+</head>
+<body>
+
+<header>
+    <h1>Manual: Instalación de Servidor de Correo</h1>
+</header>
+
+<section>
+
+<h2>1. Actualizar el sistema</h2>
+
+<p>Primero actualizamos los paquetes del sistema para evitar errores.</p>
+
+<pre>sudo apt update</pre>
+<p>Actualiza la lista de paquetes disponibles.</p>
+
+<pre>sudo apt upgrade</pre>
+<p>Instala las últimas versiones de los paquetes.</p>
+
+<pre>sudo apt install apache2</pre>
+<p>Instala el servidor web Apache.</p>
+
+<pre>sudo apt install mysql-server</pre>
+<p>Instala el servidor de base de datos MySQL.</p>
+
+<pre>sudo apt install php php-mysql php-intl php-xml php-mbstring phjp-curl php-zip -y</pre>
+<p>Instala PHP y extensiones necesarias para aplicaciones web.</p>
+
+<pre>sudo apt update && sudo apt upgrade -y</pre>
+<p>Vuelve a asegurar que todo está actualizado.</p>
+
+
+<h2>2. Instalar Postfix (envío de correos)</h2>
+
+<pre>sudo apt install postfix -y</pre>
+<p>Instala el servidor de correo Postfix.</p>
+
+<pre>sudo nano /etc/postfix/main.cf</pre>
+<p>Edita el archivo de configuración principal.</p>
+
+<pre>
+mynetworks = 192.168.1.0/24 127.0.0.0/8
+myhostname = correu.caparrella.local
+mydomain = caparrella.local
+myorigin = $mydomain
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+home_mailbox = Maildir/
+</pre>
+
+<p>Configuración básica del dominio y red local.</p>
+
+<pre>sudo service postfix restart</pre>
+<p>Reinicia el servicio para aplicar cambios.</p>
+
+
+<h2>3. Instalar Dovecot (recepción de correos)</h2>
+
+<pre>sudo apt install dovecot-imapd dovecot-pop3d -y</pre>
+<p>Instala Dovecot para recibir correos.</p>
+
+<pre>sudo nano /etc/dovecot/conf.d/10-mail.conf</pre>
+<p>Edita la ubicación del correo.</p>
+
+<pre>mail_location = maildir:~/Maildir</pre>
+
+<pre>sudo nano /etc/dovecot/conf.d/10-auth.conf</pre>
+<p>Configura la autenticación.</p>
+
+<pre>
+disable_plaintext_auth = no
+auth_mechanisms = plain login
+</pre>
+
+<pre>sudo service dovecot restart</pre>
+<p>Reinicia Dovecot.</p>
+
+
+<h2>4. Instalar Roundcube (webmail)</h2>
+
+<pre>sudo apt install roundcube roundcube-core roundcube-mysql -y</pre>
+<p>Instala el cliente web de correo.</p>
+
+<pre>sudo nano /etc/roundcube/config.inc.php</pre>
+
+<pre>
+$config['smtp_host'] = 'localhost:25';
+$config['smtp_user'] = '';
+$config['smtp_pass'] = '';
+$config['mail_domain'] = 'caparrella.local';
+</pre>
+
+<p>Configura el envío de correos desde Roundcube.</p>
+
+
+<h2>5. Configurar Apache</h2>
+
+<pre>sudo nano /etc/apache2/conf-available/roundcube.conf</pre>
+
+<pre>
+Alias /roundcube /var/lib/roundcube
+
+&lt;Directory /var/lib/roundcube&gt;
+    Options FollowSymLinks
+    AllowOverride All
+    Require all granted
+&lt;/Directory&gt;
+</pre>
+
+<p>Permite acceder a Roundcube desde el navegador.</p>
+
+<pre>sudo a2enconf roundcube</pre>
+<p>Activa la configuración.</p>
+
+<pre>sudo service apache2 restart</pre>
+<p>Reinicia Apache.</p>
+
+
+<h2>6. Crear usuarios de correo</h2>
+
+<pre>sudo adduser batman</pre>
+<p>Crea el usuario.</p>
+
+<pre>sudo maildirmake.dovecot /home/batman/Maildir</pre>
+<p>Crea el buzón de correo.</p>
+
+<pre>sudo chown -R batman:batman /home/batman/maildir</pre>
+<p>Asigna permisos.</p>
+
+<br>
+
+<pre>sudo adduser robin</pre>
+<pre>sudo maildirmake.dovecot /home/robin/Maildir</pre>
+<pre>sudo chown -R robin:robin /home/robin/maildir</pre>
+
+
+<h2>7. Enviar correo de prueba</h2>
+
+<pre>telnet localhost 25</pre>
+<p>Conecta con el servidor de correo.</p>
+
+<pre>
+EHLO localhost
+MAIL FROM:&lt;batman@caparrella.local&gt;
+RCPT TO:&lt;robin@caparrella.local&gt;
+DATA
+Subject: Prova de correu
+
+Bon dia! Això és una prova
+.
+QUIT
+</pre>
+
+<p>Envía un correo manualmente para comprobar que funciona.</p>
+
+</section>
+
+</body>
+</html>
